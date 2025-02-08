@@ -1,6 +1,10 @@
 package msf;
 
 import java.io.*;
+import java.security.KeyStore;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.io.FileInputStream;
 import java.net.*;
 import java.util.*;
 import javax.net.ssl.*;
@@ -24,22 +28,26 @@ public class MsgRpcImpl extends RpcConnectionImpl {
 	 * Creates a new URL to use as the basis of a connection.
 	 */
 	public MsgRpcImpl(String username, String password, String host, int port, boolean ssl, boolean debugf) throws MalformedURLException {
-		if (ssl) { // Install the all-trusting trust manager & HostnameVerifier
+		if (ssl) { // Install the trust manager & HostnameVerifier
 			try {
 				SSLContext sc = SSLContext.getInstance("SSL");
-				sc.init(null, new TrustManager[] {
-					new X509TrustManager() {
-						public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-							return null;
-						}
-						public void checkClientTrusted(
-							java.security.cert.X509Certificate[] certs, String authValue) {
-						}
-						public void checkServerTrusted(
-							java.security.cert.X509Certificate[] certs, String authValue) {
-						}
-					}
-				}, new java.security.SecureRandom());
+				
+				// Load the trusted certificate
+				File certificateFile = new File("path/to/trusted-certificate");
+				KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
+				keyStore.load(null, null);
+				X509Certificate trustedCertificate;
+				try (InputStream cert = new FileInputStream(certificateFile)) {
+					trustedCertificate = (X509Certificate) CertificateFactory.getInstance("X509")
+							.generateCertificate(cert);
+				}
+				keyStore.setCertificateEntry(certificateFile.getName(), trustedCertificate);
+				
+				TrustManagerFactory tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+				tmf.init(keyStore);
+				TrustManager[] trustManagers = tmf.getTrustManagers();
+				
+				sc.init(null, trustManagers, new java.security.SecureRandom());
 
 				HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
 				HttpsURLConnection.setDefaultHostnameVerifier( new HostnameVerifier() {
