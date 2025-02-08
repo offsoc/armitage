@@ -289,7 +289,7 @@ public class NetworkTable extends JComponent implements ActionListener, Refresha
 		return map;
 	}
 
-	protected float zoom = 1.0f;
+	protected double zoom = 1.0;
 
         public void zoom(double factor) {
 		if (factor == 0.0f)
