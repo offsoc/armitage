@@ -50,9 +50,10 @@ public class MsgRpcImpl extends RpcConnectionImpl {
 				sc.init(null, trustManagers, new java.security.SecureRandom());
 
 				HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-				HttpsURLConnection.setDefaultHostnameVerifier( new HostnameVerifier() {
-					public boolean verify(String string,SSLSession ssls) {
-						return true;
+				HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier() {
+					public boolean verify(String hostname, SSLSession session) {
+						HostnameVerifier defaultVerifier = HttpsURLConnection.getDefaultHostnameVerifier();
+						return defaultVerifier.verify(hostname, session);
 					}
 				});
 			}
